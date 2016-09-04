@@ -39,14 +39,14 @@ CGREEN="${CSI}1;32m"
 CYELLOW="${CSI}1;33m"
 CBLUE="${CSI}1;34m"
 
-LIBTORRENT="0.13.4"
-RTORRENT="0.9.4"
+LIBTORRENT="0.13.6"
+RTORRENT="0.9.6"
 RUTORRENT="/var/www/rutorrent"
 BONOBOX="/tmp/rutorrent-bonobox"
 
 LIBZEN0="0.4.31"
-LIBMEDIAINFO0="0.7.75"
-MEDIAINFO="0.7.75"
+LIBMEDIAINFO0="0.7.87"
+MEDIAINFO="0.7.87"
 MULTIMEDIA="deb-multimedia-keyring_2015.6.1_all.deb"
 
 # langues
@@ -54,8 +54,8 @@ OPTS=$(getopt -o vhns: --long en,fr,it,de,es,ru,sr: -n 'parse-options' -- "$@")
 eval set -- "$OPTS"
 while true; do
   case "$1" in
-	--en) GENLANG="en" ; break ;;
-	--fr) GENLANG="fr" ; break ;;
+	--en) GENLANG="fr" ; break ;;
+	--fr) GENLANG="en" ; break ;;
 	--de) GENLANG="de" ; break ;;
 	--it) GENLANG="en" ; break ;;
 	--es) GENLANG="en" ; break ;;
@@ -64,20 +64,19 @@ while true; do
 	*|\?)
 		BASELANG="${LANG:0:2}"
 		# detection auto
-		if   [ "$BASELANG" = "en" ]; then GENLANG="en"
-		elif [ "$BASELANG" = "fr" ]; then GENLANG="fr"
+		if   [ "$BASELANG" = "fr" ]; then GENLANG="fr"
+		elif [ "$BASELANG" = "en" ]; then GENLANG="en"
 		elif [ "$BASELANG" = "de" ]; then GENLANG="de"
 		elif [ "$BASELANG" = "it" ]; then GENLANG="en"
 		elif [ "$BASELANG" = "es" ]; then GENLANG="en"
 		elif [ "$BASELANG" = "ru" ]; then GENLANG="en"
 		elif [ "$BASELANG" = "sr" ]; then GENLANG="en"
 		else
-			GENLANG="en" ; fi ; break ;;
+			GENLANG="fr" ; fi ; break ;;
 	esac
 done
 
-FONCTXT ()
-{
+FONCTXT() {
 TXT1="$(grep "$1" "$BONOBOX"/lang/lang."$GENLANG" | cut -c5-)"
 TXT2="$(grep "$2" "$BONOBOX"/lang/lang."$GENLANG" | cut -c5-)"
 TXT3="$(grep "$3" "$BONOBOX"/lang/lang."$GENLANG" | cut -c5-)"
@@ -300,12 +299,12 @@ fi
 apt-get update && apt-get upgrade -y
 echo "" ; set "132" "134" ; FONCTXT "$1" "$2" ; echo -e "${CBLUE}$TXT1${CEND}${CGREEN}$TXT2${CEND}" ; echo ""
 
-apt-get install -y htop openssl apt-utils python build-essential libssl-dev pkg-config automake libcppunit-dev libtool whois libcurl4-openssl-dev libsigc++-2.0-dev libncurses5-dev nginx vim nano ccze screen subversion apache2-utils curl php5 php5-cli php5-fpm php5-curl php5-geoip unrar rar zip buildtorrent fail2ban ntp ntpdate munin ffmpeg aptitude
+apt-get install -y nmap htop openssl apt-utils python build-essential libssl-dev pkg-config automake libcppunit-dev libtool whois libcurl4-openssl-dev libsigc++-2.0-dev libncurses5-dev nginx vim nano ccze screen subversion apache2-utils curl php5 php5-cli php5-fpm php5-curl php5-geoip unrar rar zip buildtorrent fail2ban ntp ntpdate munin ffmpeg aptitude
 
 echo "" ; set "136" "134" ; FONCTXT "$1" "$2" ; echo -e "${CBLUE}$TXT1${CEND}${CGREEN}$TXT2${CEND}" ; echo ""
 
-# génération clè 2048 bits
-openssl dhparam -out dhparams.pem 2048 >/dev/null 2>&1 &
+# génération clè 4096 bits
+openssl dhparam -out dhparams.pem 4096 >/dev/null 2>&1 &
 
 # téléchargement complément favicon
 wget -T 10 -t 3 http://www.bonobox.net/script/favicon.tar.gz || wget -T 10 -t 3 http://alt.bonobox.net/favicon.tar.gz
@@ -498,15 +497,11 @@ $pathToExternals['bzip2'] = '/bin/bzip2';
 
 // archive mangling, see archiver man page before editing
 
-$fm['archive']['types'] = array('rar', 'zip', 'tar', 'gzip', 'bzip2');
-
-
-
+$fm['archive']['types'] = array('rar', 'zip', 'unzip', 'tar', 'gzip', 'bzip2');
 
 $fm['archive']['compress'][0] = range(0, 5);
 $fm['archive']['compress'][1] = array('-0', '-1', '-9');
 $fm['archive']['compress'][2] = $fm['archive']['compress'][3] = $fm['archive']['compress'][4] = array(0);
-
 ?>
 EOF
 
@@ -891,7 +886,7 @@ echo "" ; set "154" "134" ; FONCTXT "$1" "$2" ; echo -e "${CBLUE}$TXT1${CEND}${C
 
 #!/bin/bash
 
-openssl req -new -x509 -days 3658 -nodes -newkey rsa:2048 -out /etc/nginx/ssl/server.crt -keyout /etc/nginx/ssl/server.key<<EOF
+openssl req -new -x509 -sha512 -days 730 -nodes -newkey rsa:4096 -out /etc/nginx/ssl/server.crt -keyout /etc/nginx/ssl/server.key<<EOF
 RU
 Russia
 Moskva
@@ -1117,10 +1112,12 @@ schedule = espace_disque_insuffisant,1,30,close_low_diskspace=500M
 use_udp_trackers = yes
 dht = off
 peer_exchange = no
-min_peers = 40
-max_peers = 100
-min_peers_seed = 10
-max_peers_seed = 50
+download_rate = 0
+upload_rate = 0
+min_peers = 1
+max_peers = 200
+min_peers_seed = 1
+max_peers_seed = 400
 max_uploads = 15
 execute = {sh,-c,/usr/bin/php @RUTORRENT@/php/initplugins.php @USER@ &}
 EOF
@@ -1157,7 +1154,7 @@ sed -i "s/@USERMAJ@/$USERMAJ/g;" "$RUTORRENT"/conf/users/"$USER"/config.php
 # plugin.ini
 cat <<'EOF' >  "$RUTORRENT"/conf/users/"$USER"/plugins.ini
 [default]
-enabled = user-defined
+enabled = yes
 canChangeToolbar = yes
 canChangeMenu = yes
 canChangeOptions = yes
@@ -1324,7 +1321,7 @@ filter   = sshd
 logpath  = /var/log/auth.log
 bantime = 600
 banaction = iptables-multiport
-maxretry = 5
+maxretry = 3
 
 [nginx-auth]
 enabled  = true
@@ -1333,7 +1330,7 @@ filter   = nginx-auth
 logpath  = /var/log/nginx/*error.log
 bantime = 600
 banaction = iptables-multiport
-maxretry = 10
+maxretry = 3
 
 [nginx-badbots]
 enabled  = true
@@ -1342,7 +1339,7 @@ filter = nginx-badbots
 logpath = /var/log/nginx/*access.log
 bantime = 600
 banaction = iptables-multiport
-maxretry = 5">> /etc/fail2ban/jail.local
+maxretry = 3">> /etc/fail2ban/jail.local
 
 /etc/init.d/fail2ban restart
 echo "" ; set "170" "134" ; FONCTXT "$1" "$2" ; echo -e "${CBLUE}$TXT1${CEND}${CGREEN}$TXT2${CEND}" ; echo ""
@@ -1458,7 +1455,7 @@ filter = vsftpd
 logpath = /var/log/vsftpd.log
 bantime  = 600
 banaction = iptables-multiport
-maxretry = 5">> /etc/fail2ban/jail.local
+maxretry = 2">> /etc/fail2ban/jail.local
 
 /etc/init.d/fail2ban restart
 echo "" ; set "172" "134" ; FONCTXT "$1" "$2" ; echo -e "${CBLUE}$TXT1${CEND}${CGREEN}$TXT2${CEND}" ; echo ""
@@ -1474,7 +1471,7 @@ kill -HUP "$(pgrep -x openssl)"
 echo "" ; set "174" ; FONCTXT "$1" ; echo -e "${CBLUE}$TXT1${CEND}"
 set "176" ; FONCTXT "$1" ; echo -e "${CRED}$TXT1${CEND}" ; echo ""
 cd /etc/nginx/ssl
-openssl dhparam -out dhparams.pem 2048
+openssl dhparam -out dhparams.pem 4096
 chmod 600 dhparams.pem
 service nginx restart
 echo "" ; set "178" "134" ; FONCTXT "$1" "$2" ; echo -e "${CBLUE}$TXT1${CEND}${CGREEN}$TXT2${CEND}" ; echo ""
@@ -1697,10 +1694,12 @@ schedule = espace_disque_insuffisant,1,30,close_low_diskspace=500M
 use_udp_trackers = yes
 dht = off
 peer_exchange = no
-min_peers = 40
-max_peers = 100
-min_peers_seed = 10
-max_peers_seed = 50
+download_rate = 0
+upload_rate = 0
+min_peers = 1
+max_peers = 200
+min_peers_seed = 1
+max_peers_seed = 400
 max_uploads = 15
 execute = {sh,-c,/usr/bin/php @RUTORRENT@/php/initplugins.php @USERSUP@ &}
 EOF
@@ -1796,7 +1795,7 @@ sed -i "s/contact@mail.com/$EMAIL/g;" /var/www/seedbox-manager/conf/users/"$USER
 # plugin.ini
 cat <<'EOF' >  "$RUTORRENT"/conf/users/"$USERSUP"/plugins.ini
 [default]
-enabled = user-defined
+enabled = yes
 canChangeToolbar = yes
 canChangeMenu = yes
 canChangeOptions = yes
@@ -2116,10 +2115,12 @@ schedule = espace_disque_insuffisant,1,30,close_low_diskspace=500M
 use_udp_trackers = yes
 dht = off
 peer_exchange = no
-min_peers = 40
-max_peers = 100
-min_peers_seed = 10
-max_peers_seed = 50
+download_rate = 0
+upload_rate = 0
+min_peers = 1
+max_peers = 200
+min_peers_seed = 1
+max_peers_seed = 400
 max_uploads = 15
 execute = {sh,-c,/usr/bin/php @RUTORRENT@/php/initplugins.php @USER@ &}
 EOF
@@ -2165,7 +2166,7 @@ sed -i "s/@PORT@/$PORT/g;" "$RUTORRENT"/conf/users/"$USER"/config.php
 # plugin.ini
 cat <<'EOF' >  "$RUTORRENT"/conf/users/"$USER"/plugins.ini
 [default]
-enabled = user-defined
+enabled = yes
 canChangeToolbar = yes
 canChangeMenu = yes
 canChangeOptions = yes
